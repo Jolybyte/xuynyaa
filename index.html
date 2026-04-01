@@ -2,27 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>WebGL Voxel World</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>WebGL Voxel World - Сенсорное управление</title>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
         body {
             margin: 0;
             overflow: hidden;
             font-family: 'Segoe UI', 'Courier New', monospace;
-            touch-action: none;
-        }
-        body.no-scroll {
-            position: fixed;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
+            user-select: none;
+            touch-action: none; /* Предотвращает прокрутку при касаниях */
         }
         #crosshair {
             position: absolute;
@@ -129,7 +117,6 @@
             transition: 0.2s;
             box-shadow: 0 5px 0 #2e6b2a;
             margin-bottom: 30px;
-            touch-action: manipulation;
         }
         #play-button:hover {
             background: #6fb85e;
@@ -183,143 +170,130 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            touch-action: manipulation;
         }
         .slot.active {
             border-color: #ffd966;
             transform: scale(1.08);
             box-shadow: 0 0 12px gold;
         }
-        .slot[data-type="grass"] { background-image: url('./assets/grass.png'); }
-        .slot[data-type="dirt"] { background-image: url('./assets/dirt.png'); }
-        .slot[data-type="stone"] { background-image: url('./assets/stone.png'); }
-        .slot[data-type="wood"] { background-image: url('./assets/wood.png'); }
-        .slot[data-type="leaves"] { background-image: url('./assets/leaves.png'); }
+        .slot[data-type="grass"] { background-image: url('./assets/grass.png'); background-size: cover; }
+        .slot[data-type="dirt"] { background-image: url('./assets/dirt.png'); background-size: cover; }
+        .slot[data-type="stone"] { background-image: url('./assets/stone.png'); background-size: cover; }
+        .slot[data-type="wood"] { background-image: url('./assets/wood.png'); background-size: cover; }
+        .slot[data-type="leaves"] { background-image: url('./assets/leaves.png'); background-size: cover; }
         
-        /* ========== МОБИЛЬНЫЕ УПРАВЛЕНИЯ ========== */
-        #mobile-controls {
-            display: none;
-            position: absolute;
-            top: 0;
+        /* Стили для сенсорного управления (только для мобильных) */
+        .touch-controls {
+            position: fixed;
+            bottom: 20px;
             left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
+            right: 0;
+            display: none;
             z-index: 150;
+            pointer-events: none;
+            justify-content: space-between;
+            padding: 0 20px;
         }
-        #mobile-controls.active {
-            display: block;
+        .touch-controls.visible {
+            display: flex;
         }
-        
-        #joystick-zone {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 120px;
-            height: 120px;
+        .joystick-area {
             pointer-events: auto;
-            touch-action: none;
+            width: 140px;
+            height: 140px;
+            background: rgba(30,30,40,0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 70px;
+            position: relative;
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        #joystick-base {
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            border: 3px solid rgba(255, 255, 255, 0.4);
-            box-sizing: border-box;
-        }
-        #joystick-knob {
+        .joystick-base {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.6);
-            border: 2px solid rgba(255, 255, 255, 0.9);
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 30px;
             transform: translate(-50%, -50%);
-            transition: transform 0.05s ease-out;
+            transition: transform 0.02s linear;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            border: 1px solid rgba(0,0,0,0.2);
         }
-        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
         .action-btn {
-            position: absolute;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.25);
-            border: 3px solid rgba(255, 255, 255, 0.6);
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
+            width: 70px;
+            height: 70px;
+            background: rgba(40,40,55,0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 35px;
             display: flex;
             align-items: center;
             justify-content: center;
-            pointer-events: auto;
-            touch-action: manipulation;
-            backdrop-filter: blur(4px);
-            transition: all 0.1s;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            border: 2px solid rgba(255,215,0,0.6);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            user-select: none;
+            transition: 0.05s linear;
         }
         .action-btn:active {
-            background: rgba(255, 255, 255, 0.5);
             transform: scale(0.92);
+            background: rgba(80,80,100,0.9);
         }
-        #jump-btn {
-            bottom: 40px;
-            right: 30px;
-            background: rgba(100, 200, 100, 0.4);
-            border-color: #7fcc7f;
+        .build-btn {
+            background: rgba(90,158,78,0.85);
+            border-color: #aaffaa;
         }
-        #action-btn {
-            bottom: 120px;
-            right: 30px;
-            background: rgba(200, 100, 100, 0.4);
-            border-color: #cc7f7f;
-            font-size: 11px;
+        .destroy-btn {
+            background: rgba(180,60,50,0.85);
+            border-color: #ffaaaa;
         }
-        #action-btn.place {
-            background: rgba(100, 150, 200, 0.4);
-            border-color: #7faacc;
+        .jump-btn {
+            background: rgba(255,180,40,0.85);
+            border-color: #ffdd88;
         }
-        
-        #look-zone {
+        .touch-indicator {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: auto;
-            touch-action: none;
-            z-index: 1;
-        }
-        #look-zone.disabled {
-            pointer-events: none;
-        }
-        
-        #toggle-look {
-            position: absolute;
-            top: 12px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 6px 16px;
             background: rgba(0,0,0,0.6);
-            border: 2px solid rgba(255,255,255,0.5);
+            color: #ffaa66;
+            padding: 4px 12px;
             border-radius: 20px;
-            color: white;
             font-size: 12px;
-            pointer-events: auto;
+            font-family: monospace;
+            pointer-events: none;
             z-index: 160;
-            touch-action: manipulation;
+            display: none;
+            white-space: nowrap;
+        }
+        .touch-indicator.visible {
+            display: block;
         }
         
-        @media (max-width: 700px), (hover: none) and (pointer: coarse) {
+        @media (max-width: 700px) {
             .slot { width: 48px; height: 48px; font-size: 18px; }
             .menu-title { font-size: 48px; }
-            #hotbar { bottom: 140px; }
+            .joystick-area { width: 110px; height: 110px; }
+            .joystick-base { width: 45px; height: 45px; }
+            .action-btn { width: 55px; height: 55px; font-size: 22px; }
+            .action-buttons { gap: 10px; }
         }
         
-        @media (hover: hover) and (pointer: fine) {
-            #mobile-controls { display: none !important; }
+        @media (max-width: 480px) {
+            .joystick-area { width: 90px; height: 90px; }
+            .joystick-base { width: 38px; height: 38px; }
+            .action-btn { width: 48px; height: 48px; font-size: 20px; }
+            .touch-controls { padding: 0 10px; }
         }
     </style>
 </head>
@@ -333,32 +307,35 @@
     
     <div id="menu-overlay">
         <div class="menu-title">VOXEL WORLD</div>
+        <div class="menu-sub">Сенсорное управление для телефонов</div>
         <button id="play-button">▶ ИГРАТЬ</button>
         <div class="controls-info">
-            <strong>Управление:</strong><br>
-            🖱️ ПК: ЛКМ/ПКМ — ломать/ставить • WASD — движение • Пробел — прыжок • 1-5 — блок
+            🖱️ ПК: WASD + мышь | 📱 Телефон: джойстик + кнопки<br>
+            🔨 Строить/ломать — касание по экрану<br>
+            🎮 Слоты (1-5) — нажатие на панель
         </div>
     </div>
     
     <div id="hotbar">
-        <div class="slot active" data-type="grass" title="1">🌿</div>
-        <div class="slot" data-type="dirt" title="2">🟤</div>
-        <div class="slot" data-type="stone" title="3">🪨</div>
-        <div class="slot" data-type="wood" title="4">🪵</div>
-        <div class="slot" data-type="leaves" title="5">🍃</div>
+        <div class="slot active" data-type="grass"></div>
+        <div class="slot" data-type="dirt"></div>
+        <div class="slot" data-type="stone"></div>
+        <div class="slot" data-type="wood"></div>
+        <div class="slot" data-type="leaves"></div>
     </div>
-
-    <!-- Мобильные элементы управления -->
-    <div id="mobile-controls">
-        <div id="joystick-zone">
-            <div id="joystick-base"></div>
-            <div id="joystick-knob"></div>
+    
+    <!-- Сенсорные элементы управления (появляются только на телефонах) -->
+    <div class="touch-controls" id="touchControls">
+        <div class="joystick-area" id="joystickArea">
+            <div class="joystick-base" id="joystickBase"></div>
         </div>
-        <div id="jump-btn" class="action-btn">ПРЫЖОК</div>
-        <div id="action-btn" class="action-btn">ЛОМАТЬ</div>
-        <button id="toggle-look">👁️ Обзор: ВКЛ</button>
-        <div id="look-zone"></div>
+        <div class="action-buttons">
+            <div class="action-btn destroy-btn" id="destroyTouchBtn">🗑️</div>
+            <div class="action-btn jump-btn" id="jumpTouchBtn">⬆️</div>
+            <div class="action-btn build-btn" id="buildTouchBtn">🔨</div>
+        </div>
     </div>
+    <div class="touch-indicator" id="touchIndicator">🎮 Сенсорное управление активно</div>
 
     <script type="importmap">
         {
@@ -373,28 +350,13 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // ========== ОПРЕДЕЛЕНИЕ УСТРОЙСТВА ==========
-        function isMobileDevice() {
-            return (
-                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-                ('maxTouchPoints' in navigator && navigator.maxTouchPoints > 2) ||
-                window.matchMedia('(hover: none) and (pointer: coarse)').matches
-            );
-        }
-        
-        const IS_MOBILE = isMobileDevice();
-        const POINTER_LOCK_SUPPORTED = 'pointerLockElement' in document || 
-                                       'mozPointerLockElement' in document || 
-                                       'webkitPointerLockElement' in document;
-        
-        console.log(`📱 Мобильное: ${IS_MOBILE} | 🔐 PointerLock: ${POINTER_LOCK_SUPPORTED}`);
-
-        // ========== НАСТРОЙКИ МИРА ==========
-        const WORLD_RADIUS = IS_MOBILE ? 50 : 100;
-        const MAX_INSTANCES = IS_MOBILE ? 50000 : 180000;
+        // ---------- НАСТРОЙКИ МИРА ----------
+        const WORLD_RADIUS = 100;
+        const MAX_INSTANCES = 180000;
         const BLOCK_SIZE = 1;
         const TEXTURE_PATH = './assets/';
         
+        // Типы блоков с текстурами
         const BLOCKS = {
             GRASS:  { id: 0, name: 'grass', texture: 'grass.png', color: 0x7cb55e },
             DIRT:   { id: 1, name: 'dirt',  texture: 'dirt.png',  color: 0xb87c4a },
@@ -404,8 +366,8 @@
         };
         
         let currentBlock = BLOCKS.GRASS;
-        let gameActive = false;
         
+        // Хранилище мира и текстуры
         const worldMap = new Map();
         const instancedMeshes = {};
         const freeIdPools = {};
@@ -414,6 +376,7 @@
         const textureLoader = new THREE.TextureLoader();
         const loadedTextures = {};
         
+        // Загрузка текстур
         Object.values(BLOCKS).forEach(block => {
             try {
                 const texture = textureLoader.load(TEXTURE_PATH + block.texture);
@@ -421,61 +384,60 @@
                 texture.minFilter = THREE.NearestFilter;
                 loadedTextures[block.name] = texture;
             } catch(e) {
+                console.warn(`Не удалось загрузить текстуру ${block.texture}, использую цвет`);
                 loadedTextures[block.name] = null;
             }
         });
         
+        // Сцена
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x6bb5d9);
-        scene.fog = new THREE.FogExp2(0x6bb5d9, IS_MOBILE ? 0.015 : 0.008);
+        scene.fog = new THREE.FogExp2(0x6bb5d9, 0.008);
         
-        const camera = new THREE.PerspectiveCamera(
-            IS_MOBILE ? 70 : 80, 
-            window.innerWidth / window.innerHeight, 
-            0.1, 
-            IS_MOBILE ? 150 : 280
-        );
-        const renderer = new THREE.WebGLRenderer({ 
-            antialias: true, 
-            powerPreference: IS_MOBILE ? 'low-power' : 'high-performance' 
-        });
+        const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 280);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = !IS_MOBILE;
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_MOBILE ? 1.2 : 2));
+        renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
         
+        // Освещение
         const ambient = new THREE.AmbientLight(0xffffff, 0.65);
         scene.add(ambient);
         const sunLight = new THREE.DirectionalLight(0xfff5d1, 1.2);
         sunLight.position.set(35, 45, 20);
-        sunLight.castShadow = !IS_MOBILE;
-        if (!IS_MOBILE) {
-            sunLight.shadow.mapSize.width = 1024;
-            sunLight.shadow.mapSize.height = 1024;
-        }
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
         scene.add(sunLight);
         
+        // Инициализация InstancedMesh для каждого типа блока
         Object.values(BLOCKS).forEach(block => {
             let material;
             const texture = loadedTextures[block.name];
             if (texture) {
                 material = new THREE.MeshStandardMaterial({
-                    map: texture, roughness: 0.7, metalness: 0.05
+                    map: texture,
+                    roughness: 0.7,
+                    metalness: 0.05
                 });
             } else {
                 material = new THREE.MeshStandardMaterial({
-                    color: block.color, roughness: 0.6, metalness: 0.1
+                    color: block.color,
+                    roughness: 0.6,
+                    metalness: 0.1
                 });
             }
+            
             const instMesh = new THREE.InstancedMesh(boxGeo, material, MAX_INSTANCES);
-            instMesh.castShadow = !IS_MOBILE;
-            instMesh.receiveShadow = !IS_MOBILE;
+            instMesh.castShadow = true;
+            instMesh.receiveShadow = true;
             instMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
             scene.add(instMesh);
             instancedMeshes[block.name] = instMesh;
             freeIdPools[block.name] = Array.from({ length: MAX_INSTANCES }, (_, i) => i);
         });
         
+        // Функции для работы с блоками
         function addBlock(x, y, z, blockType) {
             const key = `${x},${y},${z}`;
             if (worldMap.has(key)) return false;
@@ -484,6 +446,8 @@
             if (!pool.length) return false;
             const instanceId = pool.pop();
             dummyMatrix.position.set(x + 0.5, y + 0.5, z + 0.5);
+            dummyMatrix.scale.set(1, 1, 1);
+            dummyMatrix.rotation.set(0, 0, 0);
             dummyMatrix.updateMatrix();
             mesh.setMatrixAt(instanceId, dummyMatrix.matrix);
             mesh.instanceMatrix.needsUpdate = true;
@@ -507,16 +471,19 @@
         }
         
         function getBlockAt(x, y, z) {
-            return worldMap.has(`${Math.floor(x)},${Math.floor(y)},${Math.floor(z)}`);
+            const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+            return worldMap.has(`${ix},${iy},${iz}`);
         }
         
+        // Генерация мира
         function getHeight(x, z) {
             const freq1 = 0.14, freq2 = 0.38;
             const y1 = Math.sin(x * freq1) * Math.cos(z * freq1) * 3.2;
             const y2 = Math.sin(x * freq2 + 1.2) * 1.8 + Math.cos(z * freq2 * 1.3) * 1.8;
             const hill = Math.max(0, Math.sin(x * 0.08) * Math.cos(z * 0.08) * 1.5);
             let base = Math.floor(4 + y1 + y2 * 0.8 + hill);
-            return Math.max(2, Math.min(18, base));
+            base = Math.max(2, Math.min(18, base));
+            return base;
         }
         
         function generateWorld() {
@@ -530,11 +497,14 @@
                         else if (y > height - 3) blockType = BLOCKS.DIRT;
                         addBlock(x, y, z, blockType);
                     }
-                    const treeChance = IS_MOBILE ? 0.005 : 0.020;
-                    if (Math.random() < treeChance && Math.abs(x) < half-3 && Math.abs(z) < half-3) {
-                        const treeH = 4 + Math.floor(Math.random() * 2);
+                    // Деревья
+                    if (Math.random() < 0.020 && Math.abs(x) < half-3 && Math.abs(z) < half-3) {
+                        const treeH = 4 + Math.floor(Math.random() * 3);
+                        const trunkX = x, trunkZ = z;
                         const baseY = height + 1;
-                        for (let h = 0; h < treeH; h++) addBlock(x, baseY + h, z, BLOCKS.WOOD);
+                        for (let h = 0; h < treeH; h++) {
+                            addBlock(trunkX, baseY + h, trunkZ, BLOCKS.WOOD);
+                        }
                         const leafStart = baseY + treeH - 2;
                         for (let dy = -1; dy <= 2; dy++) {
                             const rad = dy === 2 ? 1 : (dy === -1 ? 1 : 2);
@@ -542,25 +512,27 @@
                                 for (let dz = -rad; dz <= rad; dz++) {
                                     if (Math.abs(dx) + Math.abs(dz) <= rad + 0.5 && !(dx === 0 && dz === 0 && dy === 0)) {
                                         const ly = leafStart + dy;
-                                        if (ly > baseY && !getBlockAt(x + dx, ly, z + dz)) {
-                                            addBlock(x + dx, ly, z + dz, BLOCKS.LEAVES);
+                                        if (ly > baseY && !getBlockAt(trunkX + dx, ly, trunkZ + dz)) {
+                                            addBlock(trunkX + dx, ly, trunkZ + dz, BLOCKS.LEAVES);
                                         }
                                     }
                                 }
                             }
                         }
-                        addBlock(x, baseY + treeH, z, BLOCKS.LEAVES);
+                        addBlock(trunkX, baseY + treeH, trunkZ, BLOCKS.LEAVES);
                     }
                 }
             }
         }
+        
         generateWorld();
         
         // Облака
-        for (let i = 0; i < (IS_MOBILE ? 15 : 45); i++) {
+        for (let i = 0; i < 45; i++) {
             const cloudGroup = new THREE.Group();
-            const cloudMat = new THREE.MeshBasicMaterial({ color: 0xf0f4fa, transparent: true, opacity: 0.7 });
-            for (let p = 0; p < 2 + Math.floor(Math.random() * 3); p++) {
+            const cloudMat = new THREE.MeshStandardMaterial({ color: 0xf0f4fa, transparent: true, opacity: 0.7 });
+            const pieces = 2 + Math.floor(Math.random() * 3);
+            for (let p = 0; p < pieces; p++) {
                 const piece = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 1.6), cloudMat);
                 piece.position.set((Math.random() - 0.5) * 1.8, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 1.8);
                 cloudGroup.add(piece);
@@ -569,206 +541,298 @@
             scene.add(cloudGroup);
         }
         
-        // Физика
-        const PLAYER_WIDTH = 0.62, PLAYER_HEIGHT = 1.78, GRAVITY = 24.0, JUMP_POWER = 8.2;
-        const WALK_SPEED = IS_MOBILE ? 4.5 : 5.6;
-        const playerState = { velY: 0, grounded: false, jumpQueued: false };
+        // Физика игрока
+        const PLAYER_WIDTH = 0.62;
+        const PLAYER_HEIGHT = 1.78;
+        const GRAVITY = 24.0;
+        const JUMP_POWER = 8.2;
+        const WALK_SPEED = 5.6;
+        
+        const playerState = {
+            velY: 0,
+            grounded: false,
+            jumpQueued: false
+        };
         
         function checkCollision(posX, posY, posZ) {
-            for (let bx = Math.floor(posX - PLAYER_WIDTH/2); bx <= Math.floor(posX + PLAYER_WIDTH/2); bx++)
-                for (let by = Math.floor(posY - PLAYER_HEIGHT); by <= Math.floor(posY); by++)
-                    for (let bz = Math.floor(posZ - PLAYER_WIDTH/2); bz <= Math.floor(posZ + PLAYER_WIDTH/2); bz++)
+            const minX = Math.floor(posX - PLAYER_WIDTH/2);
+            const maxX = Math.floor(posX + PLAYER_WIDTH/2);
+            const minY = Math.floor(posY - PLAYER_HEIGHT);
+            const maxY = Math.floor(posY);
+            const minZ = Math.floor(posZ - PLAYER_WIDTH/2);
+            const maxZ = Math.floor(posZ + PLAYER_WIDTH/2);
+            for (let bx = minX; bx <= maxX; bx++) {
+                for (let by = minY; by <= maxY; by++) {
+                    for (let bz = minZ; bz <= maxZ; bz++) {
                         if (worldMap.has(`${bx},${by},${bz}`)) return true;
+                    }
+                }
+            }
             return false;
         }
         
         function isGroundedTest(posX, posY, posZ) {
-            const footY = posY - PLAYER_HEIGHT - 0.08;
-            for (let [ox, oz] of [[0,0],[0.3,0],[-0.3,0],[0,0.3],[0,-0.3]])
-                if (getBlockAt(posX + ox, footY, posZ + oz)) return true;
+            const footY = posY - PLAYER_HEIGHT;
+            const testY = footY - 0.08;
+            const offsets = [[0,0], [PLAYER_WIDTH/3,0], [-PLAYER_WIDTH/3,0], [0, PLAYER_WIDTH/3], [0, -PLAYER_WIDTH/3]];
+            for (let [ox, oz] of offsets) {
+                if (getBlockAt(posX + ox, testY, posZ + oz)) return true;
+            }
             return false;
         }
         
-        // Управление
-        const keys = { w:false, a:false, s:false, d:false };
+        // Управление (клавиатура)
+        const keys = { w: false, a: false, s: false, d: false, spacePressed: false };
         const pointerControls = new PointerLockControls(camera, document.body);
         camera.position.set(0, 28, 0);
         
+        // Сенсорное управление
+        let touchMoveVector = { x: 0, z: 0 };
+        let touchActive = false;
+        let joystickActive = false;
+        let joystickTouchId = null;
+        
+        // Определение мобильного устройства
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        
+        // Элементы сенсорного интерфейса
+        const touchControlsDiv = document.getElementById('touchControls');
+        const touchIndicatorDiv = document.getElementById('touchIndicator');
+        const joystickArea = document.getElementById('joystickArea');
+        const joystickBase = document.getElementById('joystickBase');
+        
+        // Показываем сенсорные элементы только для мобильных устройств
+        if (isMobile) {
+            touchControlsDiv.classList.add('visible');
+            touchIndicatorDiv.classList.add('visible');
+        }
+        
+        // Обработка джойстика
+        function handleJoystickStart(e) {
+            e.preventDefault();
+            const rect = joystickArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const touch = e.touches ? e.touches[0] : e;
+            const deltaX = (touch.clientX - centerX) / (rect.width / 2);
+            const deltaY = (touch.clientY - centerY) / (rect.height / 2);
+            const limitedX = Math.min(1, Math.max(-1, deltaX));
+            const limitedY = Math.min(1, Math.max(-1, deltaY));
+            touchMoveVector.x = limitedX;
+            touchMoveVector.z = limitedY;
+            joystickBase.style.transform = `translate(calc(-50% + ${limitedX * 35}px), calc(-50% + ${limitedY * 35}px))`;
+            joystickActive = true;
+        }
+        
+        function handleJoystickMove(e) {
+            if (!joystickActive) return;
+            e.preventDefault();
+            const rect = joystickArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const touch = e.touches ? e.touches[0] : e;
+            const deltaX = (touch.clientX - centerX) / (rect.width / 2);
+            const deltaY = (touch.clientY - centerY) / (rect.height / 2);
+            const limitedX = Math.min(1, Math.max(-1, deltaX));
+            const limitedY = Math.min(1, Math.max(-1, deltaY));
+            touchMoveVector.x = limitedX;
+            touchMoveVector.z = limitedY;
+            joystickBase.style.transform = `translate(calc(-50% + ${limitedX * 35}px), calc(-50% + ${limitedY * 35}px))`;
+        }
+        
+        function handleJoystickEnd(e) {
+            joystickActive = false;
+            touchMoveVector.x = 0;
+            touchMoveVector.z = 0;
+            joystickBase.style.transform = 'translate(-50%, -50%)';
+        }
+        
+        if (isMobile && joystickArea) {
+            joystickArea.addEventListener('touchstart', handleJoystickStart);
+            joystickArea.addEventListener('touchmove', handleJoystickMove);
+            joystickArea.addEventListener('touchend', handleJoystickEnd);
+            joystickArea.addEventListener('touchcancel', handleJoystickEnd);
+        }
+        
+        // Кнопки действий для сенсора
+        let touchBuildQueued = false;
+        let touchDestroyQueued = false;
+        
+        if (isMobile) {
+            const buildBtn = document.getElementById('buildTouchBtn');
+            const destroyBtn = document.getElementById('destroyTouchBtn');
+            const jumpBtn = document.getElementById('jumpTouchBtn');
+            
+            if (buildBtn) {
+                buildBtn.addEventListener('touchstart', (e) => { e.preventDefault(); touchBuildQueued = true; });
+                buildBtn.addEventListener('touchend', (e) => { e.preventDefault(); touchBuildQueued = false; });
+            }
+            if (destroyBtn) {
+                destroyBtn.addEventListener('touchstart', (e) => { e.preventDefault(); touchDestroyQueued = true; });
+                destroyBtn.addEventListener('touchend', (e) => { e.preventDefault(); touchDestroyQueued = false; });
+            }
+            if (jumpBtn) {
+                jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); playerState.jumpQueued = true; });
+            }
+        }
+        
+        // Функция для обработки сенсорного билда/уничтожения по тапу на экран (когда нет активных кнопок)
+        let screenTapTimeout = null;
+        function handleScreenTapForAction(event) {
+            if (!pointerControls.isLocked) return;
+            // Не обрабатываем, если тап был на кнопках или джойстике
+            let target = event.target;
+            if (target.closest('.action-btn') || target.closest('.joystick-area') || target.closest('.slot')) return;
+            if (!currentHighlight) return;
+            
+            // По умолчанию: если тап - то строим, если долгий тап - ломаем
+            if (event.type === 'touchstart') {
+                screenTapTimeout = setTimeout(() => {
+                    if (currentHighlight) {
+                        removeBlock(currentHighlight.x, currentHighlight.y, currentHighlight.z);
+                    }
+                    screenTapTimeout = null;
+                }, 400);
+            } else if (event.type === 'touchend') {
+                if (screenTapTimeout) {
+                    clearTimeout(screenTapTimeout);
+                    screenTapTimeout = null;
+                    if (currentHighlight) {
+                        const nx = currentHighlight.x + currentHighlight.face.x;
+                        const ny = currentHighlight.y + currentHighlight.face.y;
+                        const nz = currentHighlight.z + currentHighlight.face.z;
+                        const px = camera.position.x, py = camera.position.y - PLAYER_HEIGHT + 0.5, pz = camera.position.z;
+                        const dxBlock = Math.abs(nx + 0.5 - px);
+                        const dzBlock = Math.abs(nz + 0.5 - pz);
+                        const dyBlock = Math.abs(ny + 0.5 - py);
+                        if (dxBlock > 0.65 || dzBlock > 0.65 || dyBlock > 1.5) {
+                            addBlock(nx, ny, nz, currentBlock);
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (isMobile) {
+            document.addEventListener('touchstart', handleScreenTapForAction);
+            document.addEventListener('touchend', handleScreenTapForAction);
+        }
+        
         window.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyW') keys.w = true;
-            else if (e.code === 'KeyA') keys.a = true;
-            else if (e.code === 'KeyS') keys.s = true;
-            else if (e.code === 'KeyD') keys.d = true;
-            else if (e.code === 'Space') { playerState.jumpQueued = true; e.preventDefault(); }
-            else if (e.code === 'Digit1') { currentBlock = BLOCKS.GRASS; updateActiveSlot('grass'); }
-            else if (e.code === 'Digit2') { currentBlock = BLOCKS.DIRT; updateActiveSlot('dirt'); }
-            else if (e.code === 'Digit3') { currentBlock = BLOCKS.STONE; updateActiveSlot('stone'); }
-            else if (e.code === 'Digit4') { currentBlock = BLOCKS.WOOD; updateActiveSlot('wood'); }
-            else if (e.code === 'Digit5') { currentBlock = BLOCKS.LEAVES; updateActiveSlot('leaves'); }
+            switch(e.code) {
+                case 'KeyW': keys.w = true; break;
+                case 'KeyA': keys.a = true; break;
+                case 'KeyS': keys.s = true; break;
+                case 'KeyD': keys.d = true; break;
+                case 'Space': 
+                    if (!keys.spacePressed) playerState.jumpQueued = true;
+                    keys.spacePressed = true;
+                    e.preventDefault();
+                    break;
+                case 'Digit1': currentBlock = BLOCKS.GRASS; updateActiveSlot('grass'); break;
+                case 'Digit2': currentBlock = BLOCKS.DIRT; updateActiveSlot('dirt'); break;
+                case 'Digit3': currentBlock = BLOCKS.STONE; updateActiveSlot('stone'); break;
+                case 'Digit4': currentBlock = BLOCKS.WOOD; updateActiveSlot('wood'); break;
+                case 'Digit5': currentBlock = BLOCKS.LEAVES; updateActiveSlot('leaves'); break;
+            }
         });
         
         window.addEventListener('keyup', (e) => {
-            if (e.code === 'KeyW') keys.w = false;
-            else if (e.code === 'KeyA') keys.a = false;
-            else if (e.code === 'KeyS') keys.s = false;
-            else if (e.code === 'KeyD') keys.d = false;
-            else if (e.code === 'Space') { keys.spacePressed = false; playerState.jumpQueued = false; }
+            switch(e.code) {
+                case 'KeyW': keys.w = false; break;
+                case 'KeyA': keys.a = false; break;
+                case 'KeyS': keys.s = false; break;
+                case 'KeyD': keys.d = false; break;
+                case 'Space':
+                    keys.spacePressed = false;
+                    playerState.jumpQueued = false;
+                    break;
+            }
         });
         
         function updateActiveSlot(type) {
             document.querySelectorAll('.slot').forEach(el => {
-                el.classList.toggle('active', el.dataset.type === type);
+                el.classList.remove('active');
+                if (el.dataset.type === type) el.classList.add('active');
             });
             document.getElementById('cur-block').innerText = currentBlock.name;
         }
         
         document.querySelectorAll('.slot').forEach(slot => {
-            slot.addEventListener('click', (e) => {
-                e.stopPropagation();
+            slot.addEventListener('click', () => {
                 const type = slot.dataset.type;
-                currentBlock = BLOCKS[type.toUpperCase()];
-                updateActiveSlot(type);
+                if (type === 'grass') currentBlock = BLOCKS.GRASS;
+                else if (type === 'dirt') currentBlock = BLOCKS.DIRT;
+                else if (type === 'stone') currentBlock = BLOCKS.STONE;
+                else if (type === 'wood') currentBlock = BLOCKS.WOOD;
+                else if (type === 'leaves') currentBlock = BLOCKS.LEAVES;
+                updateActiveSlot(currentBlock.name);
             });
+            if (isMobile) {
+                slot.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const type = slot.dataset.type;
+                    if (type === 'grass') currentBlock = BLOCKS.GRASS;
+                    else if (type === 'dirt') currentBlock = BLOCKS.DIRT;
+                    else if (type === 'stone') currentBlock = BLOCKS.STONE;
+                    else if (type === 'wood') currentBlock = BLOCKS.WOOD;
+                    else if (type === 'leaves') currentBlock = BLOCKS.LEAVES;
+                    updateActiveSlot(currentBlock.name);
+                });
+            }
         });
         
-        // ========== МОБИЛЬНОЕ УПРАВЛЕНИЕ ==========
-        const mobileControls = {
-            joystick: { active: false, startX: 0, startY: 0, moveVec: { x: 0, y: 0 } },
-            look: { active: false, lastX: 0, lastY: 0 },
-            actionMode: 'break',
-            lookModeEnabled: true
-        };
-        
-        if (IS_MOBILE) {
-            const joystickZone = document.getElementById('joystick-zone');
-            const joystickKnob = document.getElementById('joystick-knob');
-            const jumpBtn = document.getElementById('jump-btn');
-            const actionBtn = document.getElementById('action-btn');
-            const lookZone = document.getElementById('look-zone');
-            const toggleLookBtn = document.getElementById('toggle-look');
-            const joystickMax = 35;
-            
-            // Джойстик
-            joystickZone.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const t = e.touches[0], r = joystickZone.getBoundingClientRect();
-                mobileControls.joystick.startX = r.left + r.width/2;
-                mobileControls.joystick.startY = r.top + r.height/2;
-                mobileControls.joystick.active = true;
-                updateJoystick(t);
-            }, { passive: false });
-            
-            joystickZone.addEventListener('touchmove', (e) => {
-                if (mobileControls.joystick.active) {
-                    e.preventDefault();
-                    updateJoystick(e.touches[0]);
-                }
-            }, { passive: false });
-            
-            joystickZone.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                mobileControls.joystick.active = false;
-                mobileControls.joystick.moveVec = { x: 0, y: 0 };
-                joystickKnob.style.transform = 'translate(-50%, -50%)';
-            }, { passive: false });
-            
-            function updateJoystick(touch) {
-                const dx = touch.clientX - mobileControls.joystick.startX;
-                const dy = touch.clientY - mobileControls.joystick.startY;
-                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), joystickMax);
-                const angle = Math.atan2(dy, dx);
-                const mx = Math.cos(angle) * dist, my = Math.sin(angle) * dist;
-                joystickKnob.style.transform = `translate(calc(-50% + ${mx}px), calc(-50% + ${my}px))`;
-                mobileControls.joystick.moveVec = { x: mx/joystickMax, y: my/joystickMax };
-            }
-            
-            // Поворот камеры
-            lookZone.addEventListener('touchstart', (e) => {
-                if (!mobileControls.lookModeEnabled) return;
-                if (e.target.closest('.action-btn') || e.target.closest('#joystick-zone')) return;
-                e.preventDefault();
-                const t = e.touches[0];
-                mobileControls.look.active = true;
-                mobileControls.look.lastX = t.clientX;
-                mobileControls.look.lastY = t.clientY;
-            }, { passive: false });
-            
-            lookZone.addEventListener('touchmove', (e) => {
-                if (!mobileControls.lookModeEnabled || !mobileControls.look.active) return;
-                if (e.target.closest('.action-btn') || e.target.closest('#joystick-zone')) return;
-                e.preventDefault();
-                const t = e.touches[0];
-                const dx = t.clientX - mobileControls.look.lastX;
-                const dy = t.clientY - mobileControls.look.lastY;
-                camera.rotation.y -= dx * 0.003;
-                camera.rotation.x = Math.max(-Math.PI/2+0.1, Math.min(Math.PI/2-0.1, camera.rotation.x - dy * 0.003));
-                mobileControls.look.lastX = t.clientX;
-                mobileControls.look.lastY = t.clientY;
-            }, { passive: false });
-            
-            lookZone.addEventListener('touchend', () => mobileControls.look.active = false, { passive: false });
-            
-            // Кнопки
-            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); playerState.jumpQueued = true; }, { passive: false });
-            jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); playerState.jumpQueued = false; }, { passive: false });
-            
-            let longPressTimer = null;
-            actionBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                longPressTimer = setTimeout(() => {
-                    mobileControls.actionMode = mobileControls.actionMode === 'break' ? 'place' : 'break';
-                    actionBtn.classList.toggle('place', mobileControls.actionMode === 'place');
-                    actionBtn.textContent = mobileControls.actionMode === 'break' ? 'ЛОМАТЬ' : 'СТАВИТЬ';
-                }, 400);
-            }, { passive: false });
-            actionBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                clearTimeout(longPressTimer);
-                handleMobileAction();
-            }, { passive: false });
-            
-            toggleLookBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                mobileControls.lookModeEnabled = !mobileControls.lookModeEnabled;
-                lookZone.classList.toggle('disabled', !mobileControls.lookModeEnabled);
-                toggleLookBtn.textContent = mobileControls.lookModeEnabled ? '👁️ Обзор: ВКЛ' : '👁️ Обзор: ВЫКЛ';
-            });
-            
-            document.addEventListener('touchmove', (e) => { if (gameActive) e.preventDefault(); }, { passive: false });
-        }
-        
-        // Raycast
+        // Рейкаст
         const highlightBox = new THREE.Mesh(
             new THREE.BoxGeometry(1.02, 1.02, 1.02),
             new THREE.MeshBasicMaterial({ color: 0xffcc44, wireframe: true, transparent: true, opacity: 0.75 })
         );
         scene.add(highlightBox);
+        highlightBox.visible = false;
         let currentHighlight = null;
         
         function raycastVoxel(origin, direction, maxDist = 6.5) {
-            let [x, y, z] = [Math.floor(origin.x), Math.floor(origin.y), Math.floor(origin.z)];
-            const [stepX, stepY, stepZ] = [Math.sign(direction.x), Math.sign(direction.y), Math.sign(direction.z)];
-            const [tDX, tDY, tDZ] = [stepX ? Math.abs(1/direction.x) : Infinity, stepY ? Math.abs(1/direction.y) : Infinity, stepZ ? Math.abs(1/direction.z) : Infinity];
-            let [nextX, nextY, nextZ] = [stepX > 0 ? x+1 : (stepX < 0 ? x : Infinity), stepY > 0 ? y+1 : (stepY < 0 ? y : Infinity), stepZ > 0 ? z+1 : (stepZ < 0 ? z : Infinity)];
-            let [tMX, tMY, tMZ] = [stepX ? (nextX - origin.x)/direction.x : Infinity, stepY ? (nextY - origin.y)/direction.y : Infinity, stepZ ? (nextZ - origin.z)/direction.z : Infinity];
-            if (stepX < 0) tMX = (origin.x - nextX)/-direction.x;
-            if (stepY < 0) tMY = (origin.y - nextY)/-direction.y;
-            if (stepZ < 0) tMZ = (origin.z - nextZ)/-direction.z;
-            let face = new THREE.Vector3();
+            let x = Math.floor(origin.x);
+            let y = Math.floor(origin.y);
+            let z = Math.floor(origin.z);
+            const stepX = Math.sign(direction.x);
+            const stepY = Math.sign(direction.y);
+            const stepZ = Math.sign(direction.z);
+            const tDeltaX = stepX !== 0 ? Math.abs(1 / direction.x) : Infinity;
+            const tDeltaY = stepY !== 0 ? Math.abs(1 / direction.y) : Infinity;
+            const tDeltaZ = stepZ !== 0 ? Math.abs(1 / direction.z) : Infinity;
+            let nextX = stepX > 0 ? Math.floor(origin.x) + 1 : (stepX < 0 ? Math.floor(origin.x) : Infinity);
+            let nextY = stepY > 0 ? Math.floor(origin.y) + 1 : (stepY < 0 ? Math.floor(origin.y) : Infinity);
+            let nextZ = stepZ > 0 ? Math.floor(origin.z) + 1 : (stepZ < 0 ? Math.floor(origin.z) : Infinity);
+            let tMaxX = stepX !== 0 ? (nextX - origin.x) / direction.x : Infinity;
+            let tMaxY = stepY !== 0 ? (nextY - origin.y) / direction.y : Infinity;
+            let tMaxZ = stepZ !== 0 ? (nextZ - origin.z) / direction.z : Infinity;
+            if (stepX < 0) tMaxX = (origin.x - nextX) / -direction.x;
+            if (stepY < 0) tMaxY = (origin.y - nextY) / -direction.y;
+            if (stepZ < 0) tMaxZ = (origin.z - nextZ) / -direction.z;
+            
+            let face = new THREE.Vector3(0,0,0);
             for (let i = 0; i < maxDist * 2; i++) {
                 if (worldMap.has(`${x},${y},${z}`)) return { x, y, z, face: face.clone() };
-                if (tMX < tMY && tMX < tMZ) { x += stepX; tMX += tDX; face.set(-stepX, 0, 0); }
-                else if (tMY < tMZ) { y += stepY; tMY += tDY; face.set(0, -stepY, 0); }
-                else { z += stepZ; tMZ += tDZ; face.set(0, 0, -stepZ); }
+                if (tMaxX < tMaxY && tMaxX < tMaxZ) {
+                    x += stepX; tMaxX += tDeltaX;
+                    face.set(-stepX, 0, 0);
+                } else if (tMaxY < tMaxZ) {
+                    y += stepY; tMaxY += tDeltaY;
+                    face.set(0, -stepY, 0);
+                } else {
+                    z += stepZ; tMaxZ += tDeltaZ;
+                    face.set(0, 0, -stepZ);
+                }
             }
             return null;
         }
         
         function updateHighlight() {
-            if (!gameActive) { highlightBox.visible = false; return; }
+            if (!pointerControls.isLocked) { highlightBox.visible = false; return; }
             const dir = new THREE.Vector3();
             camera.getWorldDirection(dir);
-            const hit = raycastVoxel(camera.position, dir, IS_MOBILE ? 4 : 7);
+            const hit = raycastVoxel(camera.position, dir, 7);
             if (hit) {
                 highlightBox.position.set(hit.x + 0.5, hit.y + 0.5, hit.z + 0.5);
                 highlightBox.visible = true;
@@ -779,28 +843,22 @@
             }
         }
         
-        function placeBlockAtHighlight() {
-            if (!currentHighlight) return;
-            const { x, y, z, face } = currentHighlight;
-            const [nx, ny, nz] = [x + face.x, y + face.y, z + face.z];
-            const [px, py, pz] = [camera.position.x, camera.position.y - PLAYER_HEIGHT + 0.5, camera.position.z];
-            if (Math.abs(nx + 0.5 - px) > 0.65 || Math.abs(nz + 0.5 - pz) > 0.65 || Math.abs(ny + 0.5 - py) > 1.5) {
-                addBlock(nx, ny, nz, currentBlock);
-            }
-        }
-        
         function handleBuildDestroy(event) {
-            if (!gameActive || IS_MOBILE || !currentHighlight) return;
-            if (event.button === 0) removeBlock(currentHighlight.x, currentHighlight.y, currentHighlight.z);
-            else if (event.button === 2) placeBlockAtHighlight();
-        }
-        
-        function handleMobileAction() {
-            if (!gameActive || !IS_MOBILE || !currentHighlight) return;
-            if (mobileControls.actionMode === 'break') {
+            if (!pointerControls.isLocked) return;
+            if (!currentHighlight) return;
+            if (event.button === 0) {
                 removeBlock(currentHighlight.x, currentHighlight.y, currentHighlight.z);
-            } else {
-                placeBlockAtHighlight();
+            } else if (event.button === 2) {
+                const nx = currentHighlight.x + currentHighlight.face.x;
+                const ny = currentHighlight.y + currentHighlight.face.y;
+                const nz = currentHighlight.z + currentHighlight.face.z;
+                const px = camera.position.x, py = camera.position.y - PLAYER_HEIGHT + 0.5, pz = camera.position.z;
+                const dxBlock = Math.abs(nx + 0.5 - px);
+                const dzBlock = Math.abs(nz + 0.5 - pz);
+                const dyBlock = Math.abs(ny + 0.5 - py);
+                if (dxBlock > 0.65 || dzBlock > 0.65 || dyBlock > 1.5) {
+                    addBlock(nx, ny, nz, currentBlock);
+                }
             }
         }
         
@@ -811,38 +869,58 @@
         let previousTime = performance.now();
         
         function updateMovement(deltaSec) {
-            if (!gameActive) return;
+            if (!pointerControls.isLocked) return;
             
-            let [moveX, moveZ] = [0, 0];
-            if (IS_MOBILE && mobileControls.joystick.active) {
-                moveX = mobileControls.joystick.moveVec.x;
-                moveZ = mobileControls.joystick.moveVec.y;
-            } else {
-                if (keys.w) moveZ -= 1; if (keys.s) moveZ += 1;
-                if (keys.a) moveX -= 1; if (keys.d) moveX += 1;
+            let moveX = 0, moveZ = 0;
+            
+            // Клавиатурное управление
+            if (keys.w) moveZ -= 1;
+            if (keys.s) moveZ += 1;
+            if (keys.d) moveX += 1;
+            if (keys.a) moveX -= 1;
+            
+            // Сенсорное управление (джойстик)
+            if (isMobile && (touchMoveVector.x !== 0 || touchMoveVector.z !== 0)) {
+                moveX = touchMoveVector.x;
+                moveZ = -touchMoveVector.z;
             }
             
-            if (moveX || moveZ) {
-                const forward = new THREE.Vector3();
-                camera.getWorldDirection(forward);
-                forward.y = 0; forward.normalize();
-                const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0,1,0));
-                const moveDir = new THREE.Vector3().addScaledVector(forward, -moveZ).addScaledVector(right, moveX);
-                if (moveDir.length() > 1) moveDir.normalize();
-                const delta = moveDir.multiplyScalar(WALK_SPEED * deltaSec);
-                const [newX, newZ] = [camera.position.x + delta.x, camera.position.z + delta.z];
-                if (!checkCollision(newX, camera.position.y, camera.position.z)) camera.position.x = newX;
-                if (!checkCollision(camera.position.x, camera.position.y, newZ)) camera.position.z = newZ;
+            if (moveX !== 0 || moveZ !== 0) {
+                const len = Math.hypot(moveX, moveZ);
+                moveX /= len;
+                moveZ /= len;
             }
+            
+            const forward = new THREE.Vector3();
+            const right = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+            forward.y = 0;
+            forward.normalize();
+            right.crossVectors(forward, new THREE.Vector3(0, 1, 0));
+            
+            let moveDir = new THREE.Vector3(0, 0, 0);
+            moveDir.addScaledVector(forward, moveZ);
+            moveDir.addScaledVector(right, moveX);
+            if (moveDir.length() > 0) moveDir.normalize();
+            
+            const moveDelta = moveDir.multiplyScalar(WALK_SPEED * deltaSec);
+            let newX = camera.position.x + moveDelta.x;
+            let newZ = camera.position.z + moveDelta.z;
+            if (!checkCollision(newX, camera.position.y, camera.position.z)) camera.position.x = newX;
+            if (!checkCollision(camera.position.x, camera.position.y, newZ)) camera.position.z = newZ;
             
             playerState.velY -= GRAVITY * deltaSec;
             let newY = camera.position.y + playerState.velY * deltaSec;
             if (checkCollision(camera.position.x, newY, camera.position.z)) {
                 if (playerState.velY < 0) {
-                    camera.position.y = Math.floor(camera.position.y - PLAYER_HEIGHT) + 1 + PLAYER_HEIGHT;
-                    playerState.velY = 0; playerState.grounded = true;
+                    const footY = camera.position.y - PLAYER_HEIGHT;
+                    const topBlock = Math.floor(footY) + 1;
+                    camera.position.y = topBlock + PLAYER_HEIGHT;
+                    playerState.velY = 0;
+                    playerState.grounded = true;
                 } else if (playerState.velY > 0) {
-                    camera.position.y = Math.ceil(camera.position.y) - 0.05;
+                    const headBlock = Math.ceil(camera.position.y);
+                    camera.position.y = headBlock - 0.05;
                     playerState.velY = 0;
                 }
             } else {
@@ -850,81 +928,86 @@
                 playerState.grounded = false;
             }
             
-            if (!playerState.grounded && playerState.velY <= 0.1 && isGroundedTest(camera.position.x, camera.position.y, camera.position.z)) {
-                playerState.grounded = true; playerState.velY = 0;
+            if (!playerState.grounded && playerState.velY <= 0.1) {
+                if (isGroundedTest(camera.position.x, camera.position.y, camera.position.z)) {
+                    playerState.grounded = true;
+                    playerState.velY = 0;
+                }
             }
-            if (playerState.jumpQueued && playerState.grounded) {
-                playerState.velY = JUMP_POWER; playerState.grounded = false; playerState.jumpQueued = false;
-            }
-            if (camera.position.y < -10) { camera.position.set(0, 32, 0); playerState.velY = 0; }
             
-            document.getElementById('pos-y').textContent = camera.position.y.toFixed(2);
-            document.getElementById('vel-y').textContent = playerState.velY.toFixed(2);
-            document.getElementById('ground-status').textContent = playerState.grounded ? '✅' : '⬇️';
+            if (playerState.jumpQueued && playerState.grounded) {
+                playerState.velY = JUMP_POWER;
+                playerState.grounded = false;
+                playerState.jumpQueued = false;
+            }
+            
+            if (camera.position.y < -10) {
+                camera.position.set(0, 32, 0);
+                playerState.velY = 0;
+            }
+            
+            // Сенсорные действия билда/уничтожения (по кнопкам)
+            if (isMobile && pointerControls.isLocked && currentHighlight) {
+                if (touchBuildQueued) {
+                    const nx = currentHighlight.x + currentHighlight.face.x;
+                    const ny = currentHighlight.y + currentHighlight.face.y;
+                    const nz = currentHighlight.z + currentHighlight.face.z;
+                    const px = camera.position.x, py = camera.position.y - PLAYER_HEIGHT + 0.5, pz = camera.position.z;
+                    const dxBlock = Math.abs(nx + 0.5 - px);
+                    const dzBlock = Math.abs(nz + 0.5 - pz);
+                    const dyBlock = Math.abs(ny + 0.5 - py);
+                    if (dxBlock > 0.65 || dzBlock > 0.65 || dyBlock > 1.5) {
+                        addBlock(nx, ny, nz, currentBlock);
+                    }
+                    touchBuildQueued = false;
+                }
+                if (touchDestroyQueued) {
+                    removeBlock(currentHighlight.x, currentHighlight.y, currentHighlight.z);
+                    touchDestroyQueued = false;
+                }
+            }
+            
+            document.getElementById('pos-y').innerText = camera.position.y.toFixed(2);
+            document.getElementById('vel-y').innerText = playerState.velY.toFixed(2);
+            document.getElementById('ground-status').innerHTML = playerState.grounded ? 'да' : 'нет';
         }
         
-        // Запуск игры
+        // Меню и анимация
         const menuDiv = document.getElementById('menu-overlay');
         const playBtn = document.getElementById('play-button');
+        playBtn.addEventListener('click', () => pointerControls.lock());
+        pointerControls.addEventListener('lock', () => { menuDiv.style.display = 'none'; });
+        pointerControls.addEventListener('unlock', () => { menuDiv.style.display = 'flex'; highlightBox.visible = false; });
         
-        function startGame() {
-            menuDiv.style.display = 'none';
-            if (IS_MOBILE) document.body.classList.add('no-scroll');
-            
-            if (IS_MOBILE || !POINTER_LOCK_SUPPORTED) {
-                console.log('📱 Мобильный режим');
-                const mobileUI = document.getElementById('mobile-controls');
-                if (mobileUI) mobileUI.classList.add('active');
-                camera.position.set(0, 28, 0);
-                camera.rotation.set(0, 0, 0);
-                mobileControls.lookModeEnabled = true;
-                const lookZone = document.getElementById('look-zone');
-                if (lookZone) lookZone.classList.remove('disabled');
-                gameActive = true;
-            } else {
-                console.log('🖥️ Десктопный режим');
-                pointerControls.lock();
-                gameActive = true;
-            }
-        }
-        
-        playBtn.addEventListener('click', startGame);
-        playBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startGame(); }, { passive: false });
-        
-        pointerControls.addEventListener('lock', () => console.log('🔒 PointerLock активен'));
-        pointerControls.addEventListener('unlock', () => {
-            if (!IS_MOBILE) {
-                menuDiv.style.display = 'flex';
-                highlightBox.visible = false;
-                gameActive = false;
-                document.body.classList.remove('no-scroll');
-            }
-        });
-        
-        // Анимация
-        let fpsCounter = 0, fpsTimer = 0;
+        let fpsCounter = 0;
+        let fpsTimer = 0;
         
         function animate() {
             const now = performance.now();
-            const delta = Math.min(0.033, (now - previousTime) / 1000);
+            let delta = Math.min(0.033, (now - previousTime) / 1000);
             previousTime = now;
             
-            if (gameActive) {
+            if (pointerControls.isLocked) {
                 updateMovement(delta);
                 updateHighlight();
             } else {
                 highlightBox.visible = false;
             }
             
-            fpsCounter++; fpsTimer += delta;
-            if (fpsTimer >= 1) {
-                document.getElementById('fps-counter').textContent = fpsCounter;
-                fpsCounter = 0; fpsTimer = 0;
+            fpsCounter++;
+            fpsTimer += delta;
+            if (fpsTimer >= 1.0) {
+                document.getElementById('fps-counter').innerText = fpsCounter;
+                fpsCounter = 0;
+                fpsTimer = 0;
             }
             
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
         }
+        
+        previousTime = performance.now();
+        animate();
         
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -933,8 +1016,7 @@
         });
         
         updateActiveSlot('grass');
-        animate();
-        console.log('🎮 Voxel World готов!');
+        console.log('Voxel World запущен! Сенсорное управление активно на мобильных устройствах');
     </script>
 </body>
 </html>
